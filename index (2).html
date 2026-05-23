@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logistics — Dashboard</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-base:    #0f1117;
+      --bg-panel:   #181c25;
+      --bg-card:    #1e2333;
+      --bg-input:   #252b3b;
+      --border:     #2d3448;
+      --accent:     #f97316;
+      --accent-dim: rgba(249,115,22,.12);
+      --text-main:  #e8eaf0;
+      --text-muted: #6b7590;
+      --success-bg: rgba(34,197,94,.10);
+      --success-fg: #4ade80;
+      --danger-bg:  rgba(239,68,68,.10);
+      --danger-fg:  #f87171;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      background: var(--bg-base);
+      color: var(--text-main);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ─── Topbar ─────────────────────────────── */
+    .topbar {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar .logo {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: .04em;
+      text-decoration: none;
+    }
+    .topbar .divider { width: 1px; height: 20px; background: var(--border); }
+    .topbar .subtitle { font-size: 12px; color: var(--text-muted); }
+    .topbar .ms-auto { margin-left: auto !important; }
+    #ping-badge {
+      font-size: 11px;
+      font-family: 'IBM Plex Mono', monospace;
+      padding: 3px 9px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    #ping-badge.ok  { border-color: var(--success-fg); color: var(--success-fg); background: var(--success-bg); }
+    #ping-badge.err { border-color: var(--danger-fg);  color: var(--danger-fg);  background: var(--danger-bg); }
+
+    /* ─── Layout ─────────────────────────────── */
+    .main { padding: 2rem; max-width: 1300px; margin: 0 auto; }
+
+    .section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .75rem;
+    }
+    .section-label span {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    /* ─── Cards / Panels ─────────────────────── */
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: .75rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .panel-header i { color: var(--accent); font-size: 16px; }
+    .panel-body { padding: 1.25rem; }
+
+    /* ─── Tables ─────────────────────────────── */
+    .table {
+      color: var(--text-main);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12.5px;
+      margin: 0;
+    }
+    .table thead th {
+      background: var(--bg-card);
+      border-color: var(--border);
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: .6rem 1rem;
+      white-space: nowrap;
+    }
+    .table tbody td {
+      border-color: var(--border);
+      padding: .7rem 1rem;
+      vertical-align: middle;
+    }
+    .table tbody tr { transition: background .15s; }
+    .table tbody tr:hover { background: var(--bg-card); }
+    .table-responsive { border-radius: 8px; overflow: hidden; }
+
+    .badge-type {
+      font-size: 10px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid;
+    }
+    .badge-standard { border-color: #3b6d11; color: #4ade80; background: rgba(74,222,128,.08); }
+    .badge-fragile  { border-color: #993c1d; color: #fb923c; background: rgba(251,146,60,.08); }
+    .badge-city {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-size: 10px;
+      font-family: 'IBM Plex Mono', monospace;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(249,115,22,.25);
+    }
+
+    /* ─── Action buttons (in table) ──────────── */
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 0;
+    }
+    .btn-action:hover { color: var(--text-main); background: var(--bg-card); border-color: #444d65; }
+    .btn-action.danger:hover { color: var(--danger-fg); border-color: var(--danger-fg); background: var(--danger-bg); }
+    .btn-action.assign:hover { color: var(--accent);    border-color: var(--accent);    background: var(--accent-dim); }
+    .btn-action:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ─── Forms ──────────────────────────────── */
+    .form-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
+    .form-control, .form-select {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .form-control:focus, .form-select:focus {
+      background: var(--bg-input);
+      color: var(--text-main);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(249,115,22,.15);
+    }
+    .form-select option { background: var(--bg-card); }
+
+    /* ─── Buttons ────────────────────────────── */
+    .btn-accent {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      padding: 8px 20px;
+      border-radius: 6px;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn-accent:hover   { opacity: .88; color: #fff; }
+    .btn-accent:active  { transform: scale(.97); }
+    .btn-accent:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ─── Toast ──────────────────────────────── */
+    #toast-container {
+      position: fixed;
+      top: 68px;
+      right: 1.5rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 400px;
+    }
+    .toast-item {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      border: 1px solid;
+      animation: slideIn .25s ease;
+      line-height: 1.5;
+    }
+    .toast-item.success { background: var(--success-bg); border-color: var(--success-fg); color: var(--success-fg); }
+    .toast-item.error   { background: var(--danger-bg);  border-color: var(--danger-fg);  color: var(--danger-fg); }
+    .toast-item.info    { background: var(--accent-dim); border-color: rgba(249,115,22,.4); color: var(--accent); }
+    @keyframes slideIn { from { opacity:0; transform:translateX(24px); } to { opacity:1; transform:none; } }
+
+    /* ─── Assign Modal ───────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 1050;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    .modal-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 380px;
+      margin: 1rem;
+      animation: popIn .2s ease;
+    }
+    @keyframes popIn { from { opacity:0; transform:scale(.95); } to { opacity:1; transform:none; } }
+    .modal-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-title i { color: var(--accent); }
+    .modal-cargo-hint {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .modal-footer-btns { display: flex; gap: 8px; margin-top: 1.25rem; }
+    .btn-outline-muted {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 7px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-outline-muted:hover { background: var(--bg-card); color: var(--text-main); }
+    .modal-footer-btns .btn-accent { flex: 2; }
+
+    /* ─── Dispatch result ────────────────────── */
+    #dispatch-result {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: .9rem 1.1rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12.5px;
+      color: var(--text-main);
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ─── Spinner ────────────────────────────── */
+    .spinner-sm {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid rgba(255,255,255,.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Misc ───────────────────────────────── */
+    .empty-row td { text-align: center; color: var(--text-muted); padding: 2rem !important; font-size: 12px; font-family: 'IBM Plex Mono', monospace; }
+    .dist-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 4px; }
+    .dist-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .4s ease; }
+    .text-mono { font-family: 'IBM Plex Mono', monospace; }
+    .text-muted-custom { color: var(--text-muted) !important; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    @media (max-width: 768px) {
+      .main { padding: 1rem; }
+      .topbar { padding: 0 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ Topbar ═══════════════════════════════════════════════ -->
+<header class="topbar">
+  <span class="logo"><i class="bi bi-truck"></i> LOGIS</span>
+  <div class="divider"></div>
+  <span class="subtitle">Warehouse Management System</span>
+  <div class="ms-auto d-flex align-items-center gap-3">
+    <span id="ping-badge">
+      <i class="bi bi-circle-fill" style="font-size:7px;vertical-align:1px"></i> localhost:8080
+    </span>
+  </div>
+</header>
+
+<!-- ══ Toast Container ══════════════════════════════════════ -->
+<div id="toast-container"></div>
+
+<!-- ══ Assign Modal ═════════════════════════════════════════ -->
+<div id="assign-overlay" class="modal-overlay" style="display:none" onclick="handleOverlayClick(event)">
+  <div class="modal-box">
+    <div class="modal-title">
+      <i class="bi bi-geo-alt-fill"></i>
+      Призначити місто
+      <span id="modal-cargo-hint" class="modal-cargo-hint"></span>
+    </div>
+    <label class="form-label">Нове місто призначення</label>
+    <select id="modal-dest-select" class="form-select">
+      <option value="">Оберіть місто...</option>
+    </select>
+    <div class="modal-footer-btns">
+      <button class="btn-outline-muted" onclick="closeAssignModal()">Скасувати</button>
+      <button class="btn btn-accent" id="modal-save-btn" onclick="saveAssign()">
+        <i class="bi bi-check-lg me-1"></i> Зберегти
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Main ═════════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- Stats row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="panel p-3">
+        <div class="section-label mb-1" style="margin-bottom:4px!important"><span></span>Вантажів</div>
+        <div style="font-size:28px;font-weight:600;font-family:'IBM Plex Mono',monospace" id="stat-cargo">—</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="panel p-3">
+        <div class="section-label mb-1" style="margin-bottom:4px!important"><span></span>Міст</div>
+        <div style="font-size:28px;font-weight:600;font-family:'IBM Plex Mono',monospace" id="stat-dest">—</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="panel p-3">
+        <div class="section-label mb-1" style="margin-bottom:4px!important"><span></span>Загальна вага</div>
+        <div style="font-size:28px;font-weight:600;font-family:'IBM Plex Mono',monospace" id="stat-weight">—</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="panel p-3">
+        <div class="section-label mb-1" style="margin-bottom:4px!important"><span></span>Крихких</div>
+        <div style="font-size:28px;font-weight:600;font-family:'IBM Plex Mono',monospace" id="stat-fragile">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- ── Left column ────────────────────────── -->
+    <div class="col-lg-7">
+
+      <!-- 1. Destinations -->
+      <div class="mb-4">
+        <div class="section-label"><span></span>Напрямки</div>
+        <div class="panel">
+          <div class="panel-header">
+            <i class="bi bi-geo-alt"></i> Доступні маршрути
+            <button class="btn p-0 ms-auto" onclick="loadDestinations()" title="Оновити"
+              style="color:var(--text-muted);font-size:14px">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-borderless">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Місто</th>
+                  <th>Відстань</th>
+                  <th>Дистанція</th>
+                </tr>
+              </thead>
+              <tbody id="dest-tbody">
+                <tr class="empty-row"><td colspan="4">Завантаження...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Warehouse -->
+      <div>
+        <div class="section-label"><span></span>Склад</div>
+        <div class="panel">
+          <div class="panel-header">
+            <i class="bi bi-boxes"></i> Поточні вантажі
+            <button class="btn p-0 ms-auto" onclick="loadCargo()" title="Оновити"
+              style="color:var(--text-muted);font-size:14px">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-borderless">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Назва</th>
+                  <th>Вага</th>
+                  <th>Тип</th>
+                  <th>Місто</th>
+                  <th>Дії</th>
+                </tr>
+              </thead>
+              <tbody id="cargo-tbody">
+                <tr class="empty-row"><td colspan="6">Завантаження...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Right column ───────────────────────── -->
+    <div class="col-lg-5">
+
+      <!-- 3. Add cargo -->
+      <div class="mb-4">
+        <div class="section-label"><span></span>Новий вантаж</div>
+        <div class="panel">
+          <div class="panel-header">
+            <i class="bi bi-plus-square"></i> Додати на склад
+          </div>
+          <div class="panel-body">
+            <div class="mb-3">
+              <label class="form-label">Назва вантажу</label>
+              <input type="text" id="cargo-name" class="form-control" placeholder="наприклад: Холодильник" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Вага (кг)</label>
+              <input type="number" id="cargo-weight" class="form-control" placeholder="0.0" min="0.1" step="0.1" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Місто призначення</label>
+              <select id="cargo-dest" class="form-select">
+                <option value="">Оберіть місто...</option>
+              </select>
+            </div>
+            <button class="btn btn-accent w-100" id="add-btn" onclick="addCargo()">
+              <i class="bi bi-plus-lg me-1"></i> Додати вантаж
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Dispatch -->
+      <div>
+        <div class="section-label"><span></span>Відправлення</div>
+        <div class="panel">
+          <div class="panel-header">
+            <i class="bi bi-truck"></i> Сформувати рейс
+          </div>
+          <div class="panel-body">
+            <div class="mb-3">
+              <label class="form-label">Місто призначення</label>
+              <select id="dispatch-dest" class="form-select">
+                <option value="">Оберіть місто...</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Тип транспортного засобу</label>
+              <select id="dispatch-vehicle" class="form-select">
+                <option value="TRUCK">🚛 Truck — великовантажний</option>
+                <option value="VAN">🚐 Van — мікроавтобус</option>
+              </select>
+            </div>
+            <button class="btn btn-accent w-100" id="dispatch-btn" onclick="dispatch()">
+              <i class="bi bi-send me-1"></i> Сформувати рейс
+            </button>
+            <div id="dispatch-result-wrap" class="mt-3" style="display:none">
+              <div class="section-label"><span></span>Результат</div>
+              <div id="dispatch-result"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const BASE = 'https://logistics-api-lab5.onrender.com';
+
+  /* ── Toast ──────────────────────────────────── */
+  function showToast(msg, type = 'info', duration = 4000) {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast-item ${type}`;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => {
+      t.style.opacity = '0';
+      t.style.transition = 'opacity .3s';
+      setTimeout(() => t.remove(), 300);
+    }, duration);
+  }
+
+  /* ── Ping ───────────────────────────────────── */
+  async function ping() {
+    const badge = document.getElementById('ping-badge');
+    try {
+      await fetch(`${BASE}/api/logistics/destinations`, { signal: AbortSignal.timeout(3000) });
+      badge.className = 'ok';
+      badge.innerHTML = '<i class="bi bi-circle-fill" style="font-size:7px;vertical-align:1px"></i> localhost:8080 · online';
+    } catch {
+      badge.className = 'err';
+      badge.innerHTML = '<i class="bi bi-circle-fill" style="font-size:7px;vertical-align:1px"></i> localhost:8080 · offline';
+    }
+  }
+
+  /* ── Destinations ───────────────────────────── */
+  let destinations = [];
+
+  async function loadDestinations() {
+    const tbody = document.getElementById('dest-tbody');
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="4"><span class="spinner-sm"></span> Завантаження...</td></tr>';
+    try {
+      const res = await fetch(`${BASE}/api/logistics/destinations`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      destinations = await res.json();
+      renderDestinations();
+      populateDestSelects();
+      document.getElementById('stat-dest').textContent = destinations.length;
+    } catch (e) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="4"><i class="bi bi-exclamation-triangle me-1"></i>Помилка: ${e.message}</td></tr>`;
+      showToast('Не вдалося завантажити напрямки: ' + e.message, 'error');
+    }
+  }
+
+  function renderDestinations() {
+    const tbody = document.getElementById('dest-tbody');
+    if (!destinations.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="4">Напрямків немає</td></tr>';
+      return;
+    }
+    const maxDist = Math.max(...destinations.map(d => d.distance));
+    tbody.innerHTML = destinations.map(d => {
+      const km  = (d.distance / 1000).toFixed(1);
+      const pct = Math.round((d.distance / maxDist) * 100);
+      return `<tr>
+        <td class="text-muted-custom">#${d.id}</td>
+        <td><span class="badge-city">${escHtml(d.cityName)}</span></td>
+        <td>${km} км</td>
+        <td style="min-width:100px">
+          <div class="dist-bar"><div class="dist-fill" style="width:${pct}%"></div></div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function populateDestSelects() {
+    const opts = '<option value="">Оберіть місто...</option>' +
+      destinations.map(d =>
+        `<option value="${d.id}">${escHtml(d.cityName)} (${(d.distance / 1000).toFixed(1)} км)</option>`
+      ).join('');
+    document.getElementById('cargo-dest').innerHTML        = opts;
+    document.getElementById('dispatch-dest').innerHTML     = opts;
+    document.getElementById('modal-dest-select').innerHTML = opts;
+  }
+
+  /* ── Cargo ──────────────────────────────────── */
+  async function loadCargo() {
+    const tbody = document.getElementById('cargo-tbody');
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6"><span class="spinner-sm"></span> Завантаження...</td></tr>';
+    try {
+      const res = await fetch(`${BASE}/api/logistics/cargo`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const cargo = await res.json();
+      renderCargo(cargo);
+      updateCargoStats(cargo);
+    } catch (e) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="6"><i class="bi bi-exclamation-triangle me-1"></i>Помилка: ${e.message}</td></tr>`;
+      showToast('Не вдалося завантажити склад: ' + e.message, 'error');
+    }
+  }
+
+  /* ── БАГ-ФІК: Jackson серіалізує тільки поля, для яких є public getter.
+     Якщо в Cargo.java відсутній getId(), то JSON не міститиме поля "id"
+     і c.id буде undefined — звідси й з'являвся "#undefined" у таблиці.
+     Вирішення на боці фронту: перевіряємо явно через != null.
+     Вирішення на боці Java: додати `public Long getId() { return id; }` у Cargo.java. */
+  function renderCargo(cargo) {
+    const tbody = document.getElementById('cargo-tbody');
+    if (!cargo.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Склад порожній</td></tr>';
+      return;
+    }
+    tbody.innerHTML = cargo.map(c => {
+      const rawId   = c.id != null ? c.id : null;
+      const hasId   = rawId != null;
+      const idLabel = hasId ? `#${rawId}` : '—';
+
+      const type       = (c.cargoType || '').toLowerCase();
+      const isFragile  = type.includes('крихк') || type.includes('fragile');
+      const badgeClass = isFragile ? 'badge-fragile' : 'badge-standard';
+      const badgeText  = isFragile ? 'FRAGILE' : 'STANDARD';
+      const city       = c.destination ? c.destination.cityName : '—';
+
+      const actionBtns = hasId
+        ? `<div style="display:flex;gap:5px">
+             <button class="btn-action danger"
+               title="Списати вантаж зі складу"
+               onclick="deleteCargo(${rawId}, '${escJs(c.name)}', this)">
+               <i class="bi bi-trash3"></i>
+             </button>
+             <button class="btn-action assign"
+               title="Призначити нове місто"
+               onclick="openAssignModal(${rawId}, '${escJs(c.name)}')">
+               <i class="bi bi-geo-alt"></i>
+             </button>
+           </div>`
+        : `<span class="text-muted-custom" style="font-size:11px"
+             title="Додайте public Long getId() у Cargo.java">—</span>`;
+
+      return `<tr>
+        <td class="text-muted-custom">${idLabel}</td>
+        <td>${escHtml(c.name)}</td>
+        <td>${c.weight} кг</td>
+        <td><span class="badge-type ${badgeClass}">${badgeText}</span></td>
+        <td>${city !== '—'
+          ? `<span class="badge-city">${escHtml(city)}</span>`
+          : '<span class="text-muted-custom">—</span>'}</td>
+        <td>${actionBtns}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function updateCargoStats(cargo) {
+    document.getElementById('stat-cargo').textContent = cargo.length;
+    const total = cargo.reduce((s, c) => s + (c.weight || 0), 0);
+    document.getElementById('stat-weight').textContent = total.toFixed(1) + ' кг';
+    const fragile = cargo.filter(c => {
+      const t = (c.cargoType || '').toLowerCase();
+      return t.includes('крихк') || t.includes('fragile');
+    }).length;
+    document.getElementById('stat-fragile').textContent = fragile;
+  }
+
+  /* ── Delete Cargo ───────────────────────────── */
+  async function deleteCargo(id, name, btnEl) {
+    btnEl.disabled = true;
+    btnEl.innerHTML = '<span class="spinner-sm" style="border-top-color:var(--danger-fg)"></span>';
+    try {
+      const res = await fetch(`${BASE}/api/logistics/cargo/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      showToast('✓ Вантаж списано', 'success');
+      await loadCargo();
+    } catch (e) {
+      showToast('Помилка видалення: ' + e.message, 'error');
+      btnEl.disabled = false;
+      btnEl.innerHTML = '<i class="bi bi-trash3"></i>';
+    }
+  }
+
+  /* ── Assign Modal ───────────────────────────── */
+  let _assignCargoId = null;
+
+  function openAssignModal(cargoId, cargoName) {
+    _assignCargoId = cargoId;
+    document.getElementById('modal-cargo-hint').textContent = `#${cargoId} · ${cargoName}`;
+    document.getElementById('modal-dest-select').value = '';
+    document.getElementById('assign-overlay').style.display = 'flex';
+  }
+
+  function closeAssignModal() {
+    document.getElementById('assign-overlay').style.display = 'none';
+    _assignCargoId = null;
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('assign-overlay')) closeAssignModal();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeAssignModal();
+  });
+
+  async function saveAssign() {
+    const destId = document.getElementById('modal-dest-select').value;
+    if (!destId) { showToast('Оберіть місто зі списку', 'error'); return; }
+
+    const saveBtn = document.getElementById('modal-save-btn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-sm"></span> Збереження...';
+
+    try {
+      const params = new URLSearchParams({ destinationId: destId });
+      const res = await fetch(
+        `${BASE}/api/logistics/cargo/${_assignCargoId}/assign?${params}`,
+        { method: 'PUT' }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      showToast('✓ Маршрут призначено', 'success');
+      closeAssignModal();
+      await loadCargo();
+    } catch (e) {
+      showToast('Помилка призначення: ' + e.message, 'error');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Зберегти';
+    }
+  }
+
+  /* ── Add Cargo ──────────────────────────────── */
+  async function addCargo() {
+    const name   = document.getElementById('cargo-name').value.trim();
+    const weight = document.getElementById('cargo-weight').value.trim();
+    const destId = document.getElementById('cargo-dest').value;
+
+    if (!name)                              { showToast('Введіть назву вантажу', 'error'); return; }
+    if (!weight || parseFloat(weight) <= 0) { showToast('Вкажіть коректну вагу', 'error'); return; }
+    if (!destId)                            { showToast('Оберіть місто призначення', 'error'); return; }
+
+    const btn = document.getElementById('add-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span> Збереження...';
+
+    try {
+      const params = new URLSearchParams({ name, weight, destinationId: destId });
+      const res = await fetch(`${BASE}/api/logistics/cargo/standard?${params}`, { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const saved = await res.json();
+      showToast(`✓ "${saved.name}" (${saved.weight} кг) додано на склад`, 'success');
+      document.getElementById('cargo-name').value   = '';
+      document.getElementById('cargo-weight').value = '';
+      document.getElementById('cargo-dest').value   = '';
+      await loadCargo();
+    } catch (e) {
+      showToast('Помилка при збереженні: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i> Додати вантаж';
+    }
+  }
+
+  /* ── Dispatch ───────────────────────────────── */
+  async function dispatch() {
+    const destId  = document.getElementById('dispatch-dest').value;
+    const vehicle = document.getElementById('dispatch-vehicle').value;
+
+    if (!destId) { showToast('Оберіть місто для рейсу', 'error'); return; }
+
+    const btn = document.getElementById('dispatch-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-sm"></span> Формування рейсу...';
+
+    const resultWrap = document.getElementById('dispatch-result-wrap');
+    const resultEl   = document.getElementById('dispatch-result');
+    resultWrap.style.display = 'none';
+
+    try {
+      const params = new URLSearchParams({ destinationId: destId, vehicleType: vehicle });
+      const res = await fetch(`${BASE}/api/logistics/dispatch?${params}`, { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      resultEl.textContent = text;
+      resultWrap.style.display = 'block';
+      showToast('Рейс успішно сформовано', 'success');
+      await loadCargo();
+    } catch (e) {
+      showToast('Помилка при формуванні рейсу: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-send me-1"></i> Сформувати рейс';
+    }
+  }
+
+  /* ── Helpers ────────────────────────────────── */
+  function escHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  function escJs(str) {
+    return String(str ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  }
+
+  /* ── Init ───────────────────────────────────── */
+  (async function init() {
+    await ping();
+    await loadDestinations();
+    await loadCargo();
+  })();
+</script>
+</body>
+</html>
